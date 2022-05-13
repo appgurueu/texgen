@@ -1,7 +1,7 @@
 local modname = "texgen"
 local modpath = minetest.get_modpath(modname)
 
--- Rewrite mod.conf on startup
+-- Rewrite mod.conf on startup; register_on_mods_loaded does not work
 do
 	local conf = Settings(modpath .. "/mod.conf")
 	conf:set("name", modname)
@@ -40,15 +40,17 @@ if minetest.rmdir then
 end
 minetest.mkdir(texture_path)
 
+local media = modlib.minetest.media
+
 local function get_path(filename)
 	local path
-	local mod = modlib.minetest.media.mods[filename]
+	local mod = media.mods[filename]
 	if mod == modname then -- media overridden by this mod
-		local overridden_paths = modlib.minetest.media.overridden_paths[filename]
+		local overridden_paths = media.overridden_paths[filename]
 		if not overridden_paths then return end
 		path = overridden_paths[#overridden_paths]
 	else
-		path = modlib.minetest.media.paths[filename]
+		path = media.paths[filename]
 	end
 	return path
 end
@@ -113,7 +115,7 @@ local function transform_png(filename, path)
 		modlib.minetest.encode_png(width, height, data))
 end
 
-for filename in pairs(modlib.minetest.media.paths) do
+for filename in pairs(media.paths) do
 	local _, ext = modlib.file.get_extension(filename)
 	if ext == "png" then
 		local path = get_path(filename)
@@ -124,7 +126,7 @@ end
 -- Builtin textures aren't provided by mods and are thus unknown to modlib; provide them through this mod
 for _, filename in ipairs(minetest.get_dir_list(modlib.file.concat_path{modpath, "builtin"}, false)) do
 	-- Don't override builtin overrides by other mods
-	if filename:match"%.png$" and not (modlib.minetest.media[filename] and modlib.minetest.overridden_paths[filename]) then
+	if filename:match"%.png$" and not (media.paths[filename] and media.overridden_paths[filename]) then
 		transform_png(filename, modlib.file.concat_path{modpath, "builtin", filename})
 	end
 end
