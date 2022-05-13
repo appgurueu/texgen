@@ -1,30 +1,6 @@
 local modname = "texgen"
 local modpath = minetest.get_modpath(modname)
 
--- Rewrite mod.conf on startup
-do
-	local conf = Settings(modpath .. "/mod.conf")
-	conf:set("name", modname)
-	conf:set("description", "Dynamically generated texture packs")
-	conf:set("depends", "modlib")
-	local to_depend = {}
-	local to_dep_list = {}
-	for _, modname in pairs(minetest.get_modnames()) do to_depend[modname] = true end -- luacheck: ignore
-	local opt_dep_str = conf:get"optional_depends" or ""
-	for opt_depend in opt_dep_str:gmatch"[^%s,]+" do
-		table.insert(to_dep_list, opt_depend)
-		to_depend[opt_depend] = nil
-	end
-	to_depend.texgen = nil -- no circular dependency
-	to_depend.modlib = nil -- modlib is already a hard dependency
-	if next(to_depend) or not modlib then
-		for dep in pairs(to_depend) do table.insert(to_dep_list, dep) end
-		conf:set("optional_depends", table.concat(to_dep_list, ", "))
-		conf:write()
-		error"mod.conf updated to optionally depend on all enabled mods, please restart the game"
-	end
-end
-
 assert(modlib.version >= 94, "update modlib to version rolling-94 or newer")
 
 -- Register palette downloading command if HTTP API is available
@@ -40,15 +16,17 @@ if minetest.rmdir then
 end
 minetest.mkdir(texture_path)
 
+local media = modlib.minetest.media
+
 local function get_path(filename)
 	local path
-	local mod = modlib.minetest.media.mods[filename]
+	local mod = media.mods[filename]
 	if mod == modname then -- media overridden by this mod
-		local overridden_paths = modlib.minetest.media.overridden_paths[filename]
+		local overridden_paths = media.overridden_paths[filename]
 		if not overridden_paths then return end
 		path = overridden_paths[#overridden_paths]
 	else
-		path = modlib.minetest.media.paths[filename]
+		path = media.paths[filename]
 	end
 	return path
 end
@@ -113,18 +91,21 @@ local function transform_png(filename, path)
 		modlib.minetest.encode_png(width, height, data))
 end
 
-for filename in pairs(modlib.minetest.media.paths) do
-	local _, ext = modlib.file.get_extension(filename)
-	if ext == "png" then
-		local path = get_path(filename)
-		-- May be (only) overridden media from this mod, which does not have a path (as it was deleted)
-		if path then transform_png(filename, path) end
+-- Guaranteed to run before media caching happens
+minetest.register_on_mods_loaded(function()
+	for filename in pairs(media.paths) do
+		local _, ext = modlib.file.get_extension(filename)
+		if ext == "png" then
+			local path = get_path(filename)
+			-- May be (only) overridden media from this mod, which does not have a path (as it was deleted)
+			if path then transform_png(filename, path) end
+		end
 	end
-end
--- Builtin textures aren't provided by mods and are thus unknown to modlib; provide them through this mod
-for _, filename in ipairs(minetest.get_dir_list(modlib.file.concat_path{modpath, "builtin"}, false)) do
-	-- Don't override builtin overrides by other mods
-	if filename:match"%.png$" and not (modlib.minetest.media[filename] and modlib.minetest.overridden_paths[filename]) then
-		transform_png(filename, modlib.file.concat_path{modpath, "builtin", filename})
+	-- Builtin textures aren't provided by mods and are thus unknown to modlib; provide them through this mod
+	for _, filename in ipairs(minetest.get_dir_list(modlib.file.concat_path{modpath, "builtin"}, false)) do
+		-- Don't override builtin overrides by other mods
+		if filename:match"%.png$" and not (media.paths[filename] and media.overridden_paths[filename]) then
+			transform_png(filename, modlib.file.concat_path{modpath, "builtin", filename})
+		end
 	end
-end
+end)
