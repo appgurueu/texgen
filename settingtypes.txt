@@ -1,0 +1,19 @@
+# Replace each texture with a single pixel of its weighted average RGB color
+texgen.average (Texgen Average) bool false
+
+# Invert the RGB colors
+texgen.invert (Texgen Invert) bool false
+
+# Convert RGB to monochrome (greyscale)
+texgen.monochrome (Texgen Monochrome) bool false
+
+# Increase or decrease saturation by a factor
+texgen.saturate (Texgen Saturate) float 1 0.100000 10.000000
+
+[texgen.palette]
+
+# Dithering method to use
+texgen.palette.dithering (Texgen Palette Dithering) enum floyd_steinberg sierra,stucke,sierra_lite,jarvis_judice_ninke,floyd_steinberg,none,two_row_sierra,burkes,atkinson
+
+# Name of the palette to use (without extension)
+texgen.palette.name (Texgen Palette Name) enum apollo soggy-newspapers,apollo,zughy-32,aap-64,pico-8,resurrect-64
