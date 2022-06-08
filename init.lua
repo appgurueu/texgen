@@ -25,13 +25,7 @@ do
 	end
 end
 
-assert(modlib.version >= 94, "update modlib to version rolling-94 or newer")
-
--- Register palette downloading command if HTTP API is available
-local http = minetest.request_http_api()
-if http then
-	assert(loadfile(modlib.mod.get_resource"download_palette.lua"))(http)
-end
+assert(modlib.version >= 96, "update modlib to version rolling-96 or newer")
 
 local texture_path = modpath .. "/textures/"
 if minetest.rmdir then
@@ -56,8 +50,17 @@ local function get_path(filename)
 end
 
 texgen = {} -- HACK only use the mod namespace to expose the dithering methods to the schema...
+
 local dithering = modlib.mod.include"dithering.lua" -- sets texgen.dithering_methods
-local conf = modlib.mod.configuration()
+
+local conf, schema = modlib.mod.configuration()
+
+-- Register palette downloading command if HTTP API is available; this reloads the schema
+local insecure_env, http = minetest.request_insecure_environment(), minetest.request_http_api()
+if insecure_env and http then
+	assert(loadfile(modlib.mod.get_resource"download_palette.lua"))(insecure_env, http, schema)
+end
+
 texgen = nil -- ...delete it afterwards
 
 local palette, dither

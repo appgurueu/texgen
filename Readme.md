@@ -18,7 +18,7 @@ You can use the `/download_palette <url>` chatcommand to download a PNG palette 
 
 See `/help download_palette` for details on its usage.
 
-Requires the `server` priv. Only available if `texgen` is added to `secure.http_mods`.
+Requires the `server` priv. Only available if `texgen` is added to both `secure.http_mods` and `secure.trusted_mods`.
 
 **WARNING: Enabling this feature poses a minor security risk.**
 
