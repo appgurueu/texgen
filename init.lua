@@ -127,9 +127,9 @@ for filename in pairs(media.paths) do
 	end
 end
 -- Builtin textures aren't provided by mods and are thus unknown to modlib; provide them through this mod
-for _, filename in ipairs(minetest.get_dir_list(modlib.file.concat_path{modpath, "builtin"}, false)) do
+for _, filename in ipairs(minetest.get_dir_list(modlib.file.concat_path{modpath, "minetest"}, false)) do
 	-- Don't override builtin overrides by other mods
 	if filename:match"%.png$" and not (media.paths[filename] and media.overridden_paths[filename]) then
-		transform_png(filename, modlib.file.concat_path{modpath, "builtin", filename})
+		transform_png(filename, modlib.file.concat_path{modpath, "minetest", filename})
 	end
 end
