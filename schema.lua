@@ -6,6 +6,11 @@ end
 return {
 	type = "table",
 	entries = {
+		use_dirs = {
+			type = "boolean",
+			description = "Whether to use subdirectories for each mod inside the `textures` folder",
+			default = false,
+		},
 		palette = {
 			type = "table",
 			entries = {

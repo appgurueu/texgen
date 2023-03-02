@@ -24,6 +24,8 @@ Requires the `server` priv. Only available if `texgen` is added to both `secure.
 
 ## Configuration
 
+Note that Minetest will only load media from subfolders [as of version 5.4.0](https://github.com/minetest/minetest/commit/98faeac5a7b382e5d7ce0474bf7d52fc5975a23c), so if you enable `texgen.use_dirs`, the textures may not show on older Minetest versions.
+
 <!--modlib:conf:2-->
 ### `average`
 
@@ -88,6 +90,13 @@ Increase or decrease saturation by a factor
 * Default: `1`
 * &gt;= `0.1`
 * &lt;= `10`
+
+### `use_dirs`
+
+Whether to use subdirectories for each mod inside the `textures` folder
+
+* Type: boolean
+* Default: `false`
 <!--modlib:conf-->
 
 ## Links

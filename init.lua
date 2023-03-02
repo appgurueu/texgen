@@ -84,7 +84,8 @@ local function read_convert_png(path)
 end
 
 local clamp = modlib.math.clamp
-local function transform_png(filename, path)
+local function transform_png(modname, filename, path)
+	assert(modname ~= "texgen")
 	local png = read_convert_png(path)
 	if palette then
 		dither(png, palette)
@@ -114,8 +115,16 @@ local function transform_png(filename, path)
 	if average then
 		width, height, data = 1, 1, {average(png):to_number()}
 	end
-	modlib.file.write(modlib.file.concat_path{modpath, "textures", filename},
-		modlib.minetest.encode_png(width, height, data))
+	local outpath = {modpath, "textures"}
+	if conf.use_dirs then
+		-- Try to create the mod directory (silently fails if it already exists)
+		table.insert(outpath, modname)
+		minetest.mkdir(modlib.file.concat_path(outpath))
+	end
+	table.insert(outpath, filename)
+	-- Now write the file. This may not fail.
+	assert(modlib.file.write(modlib.file.concat_path(outpath),
+		modlib.minetest.encode_png(width, height, data)))
 end
 
 for filename in pairs(media.paths) do
@@ -123,13 +132,16 @@ for filename in pairs(media.paths) do
 	if ext == "png" then
 		local path = get_path(filename)
 		-- May be (only) overridden media from this mod, which does not have a path (as it was deleted)
-		if path then transform_png(filename, path) end
+		if path then
+			transform_png(media.mods[filename], filename, path)
+		end
 	end
 end
+
 -- Builtin textures aren't provided by mods and are thus unknown to modlib; provide them through this mod
 for _, filename in ipairs(minetest.get_dir_list(modlib.file.concat_path{modpath, "minetest"}, false)) do
 	-- Don't override builtin overrides by other mods
 	if filename:match"%.png$" and not (media.paths[filename] and media.overridden_paths[filename]) then
-		transform_png(filename, modlib.file.concat_path{modpath, "minetest", filename})
+		transform_png("minetest", filename, modlib.file.concat_path{modpath, "minetest", filename})
 	end
 end

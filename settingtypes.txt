@@ -10,6 +10,9 @@ texgen.monochrome (Texgen Monochrome) bool false
 # Increase or decrease saturation by a factor
 texgen.saturate (Texgen Saturate) float 1 0.100000 10.000000
 
+# Whether to use subdirectories for each mod inside the `textures` folder
+texgen.use_dirs (Texgen Use dirs) bool false
+
 [texgen.palette]
 
 # Dithering method to use
