@@ -25,7 +25,7 @@ do
 	end
 end
 
-assert(modlib.version >= 96, "update modlib to version rolling-96 or newer")
+assert(modlib.version >= 100, "update modlib to version rolling-100 or newer")
 
 local texture_path = modpath .. "/textures/"
 if minetest.rmdir then
@@ -36,17 +36,19 @@ minetest.mkdir(texture_path)
 
 local media = modlib.minetest.media
 
-local function get_path(filename)
-	local path
+local function get_mod_and_path(filename)
 	local mod = media.mods[filename]
+	local path
 	if mod == modname then -- media overridden by this mod
 		local overridden_paths = media.overridden_paths[filename]
 		if not overridden_paths then return end
-		path = overridden_paths[#overridden_paths]
+		local overridden_mods = assert(media.overridden_mods[filename])
+		-- Return the last overridden mod & path
+		mod, path = overridden_mods[#overridden_mods], overridden_paths[#overridden_paths]
 	else
 		path = media.paths[filename]
 	end
-	return path
+	return mod, path
 end
 
 texgen = {} -- HACK only use the mod namespace to expose the dithering methods to the schema...
@@ -84,8 +86,8 @@ local function read_convert_png(path)
 end
 
 local clamp = modlib.math.clamp
-local function transform_png(modname, filename, path)
-	assert(modname ~= "texgen")
+local function transform_png(mod, filename, path)
+	assert(mod ~= modname)
 	local png = read_convert_png(path)
 	if palette then
 		dither(png, palette)
@@ -118,7 +120,7 @@ local function transform_png(modname, filename, path)
 	local outpath = {modpath, "textures"}
 	if conf.use_dirs then
 		-- Try to create the mod directory (silently fails if it already exists)
-		table.insert(outpath, modname)
+		table.insert(outpath, mod)
 		minetest.mkdir(modlib.file.concat_path(outpath))
 	end
 	table.insert(outpath, filename)
@@ -130,10 +132,10 @@ end
 for filename in pairs(media.paths) do
 	local _, ext = modlib.file.get_extension(filename)
 	if ext == "png" then
-		local path = get_path(filename)
+		local mod, path = get_mod_and_path(filename)
 		-- May be (only) overridden media from this mod, which does not have a path (as it was deleted)
 		if path then
-			transform_png(media.mods[filename], filename, path)
+			transform_png(mod, filename, path)
 		end
 	end
 end
